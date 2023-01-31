@@ -3,18 +3,19 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
 	"github.com/jfrog/jfrog-cli-core/v2/utils/coreutils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
-	"os"
-	"strings"
 )
 
 func GetHelloCommand() components.Command {
 	return components.Command{
 		Name:        "hello",
 		Description: "Says Hello.",
-		Aliases:     []string{"hi"},
+		Aliases:     []string{"hi", "bye"},
 		Arguments:   getHelloArguments(),
 		Flags:       getHelloFlags(),
 		EnvVars:     getHelloEnvVar(),
