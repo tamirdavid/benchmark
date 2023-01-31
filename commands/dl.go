@@ -13,9 +13,7 @@ func DownloadCommand() components.Command {
 	return components.Command{
 		Name:        "dl",
 		Description: "Download artifacts tests",
-		Arguments:   DownloadCommandArguments(),
 		Flags:       DownloadCommandFlags(),
-		EnvVars:     DownloadCommandEnvVar(),
 		Action: func(c *components.Context) error {
 			downloadConfig := setDownloadConfig(c)
 			return dlCmd(c, downloadConfig)
@@ -30,15 +28,6 @@ func setDownloadConfig(c *components.Context) *BenchmarkConfig {
 	downloadConfig.repositoryName = c.GetStringFlagValue("repo_name")
 	downloadConfig.operation = "download"
 	return downloadConfig
-}
-
-func DownloadCommandArguments() []components.Argument {
-	return []components.Argument{
-		{
-			Name:        "addressee",
-			Description: "The name of the person you would like to greet.",
-		},
-	}
 }
 
 func DownloadCommandFlags() []components.Flag {
@@ -59,16 +48,6 @@ func DownloadCommandFlags() []components.Flag {
 			Name:         "repo_name",
 			Description:  "Repository name to check the downloads against",
 			DefaultValue: "benchmark-dl-tests",
-		},
-	}
-}
-
-func DownloadCommandEnvVar() []components.EnvVar {
-	return []components.EnvVar{
-		{
-			Name:        "HELLO_FROG_GREET_PREFIX",
-			Default:     "A new greet from your plugin template: ",
-			Description: "Adds a prefix to every greet.",
 		},
 	}
 }
