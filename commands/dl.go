@@ -35,13 +35,13 @@ func DownloadCommandFlags() []components.Flag {
 		components.StringFlag{
 			Name:         "size",
 			Description:  "The value provided for this flag will determine the size of the files that will be generated for testing the download process.",
-			DefaultValue: "1",
+			DefaultValue: "50",
 			Mandatory:    true,
 		},
 		components.StringFlag{
 			Name:         "iterations",
 			Description:  "This flag specify how many files will be created for testing the download process.",
-			DefaultValue: "5",
+			DefaultValue: "30",
 			Mandatory:    true,
 		},
 		components.StringFlag{

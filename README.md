@@ -18,23 +18,30 @@ Uninstalling a plugin
 
 ## Usage
 ### Commands
-* hello
-    - Arguments:
-        - addressee - The name of the person you would like to greet.
+* up
     - Flags:
-        - shout: Makes output uppercase **[Default: false]**
+        - size: Determine the size of the files (in MB) that will be generated for testing the upload process. **[Default: 50]** **[Mandatory: False]**
+        - iterations:How many files will be created for testing the upload process. **[Default: 30]** **[Mandatory: False]**
+        - repo_name: repository the tests will be executed on. **[Default: benchmark-up-tests]** **[Mandatory: False]**
     - Example:
     ```
-  $ jf hello-frog hello world --shout
-  
-  NEW GREETING: HELLO WORLD
+  $ jf benchmark up
+  $ jf benchmark up --size 50 --iterations 5
+  $ jf benchmark up --size 50 --iterations 5 --repo_name mytestrepo
+  ```
+### Commands
+* dl
+    - Flags:
+        - size: Determine the size of the files (in MB) that will be generated for testing the download process. **[Default: 50]** **[Mandatory: False]**
+        - iterations: How many files will be created for testing the download process. **[Default: 30]** **[Mandatory: False]**
+        - repo_name: Repository the tests will be executed on. **[Default: benchmark-up-tests]** **[Mandatory: False]**
+    - Example:
+    ```
+  $ jf benchmark dl  
+  $ jf benchmark dl --size 50 --iterations 5
+  $ jf benchmark dl --size 50 --iterations 5 --repo_name mytestrepo
   ```
 
-### Environment variables
-* HELLO_FROG_GREET_PREFIX - Adds a prefix to every greet **[Default: New greeting: ]**
-
-## Additional info
-None.
 
 ## Release Notes
 The release notes are available [here](RELEASE.md).

@@ -34,19 +34,19 @@ func UploadCommandFlags() []components.Flag {
 	return []components.Flag{
 		components.StringFlag{
 			Name:         "size",
-			Description:  "Size of file in MB to preform download tests for",
+			Description:  "Determine the size of the files (in MB) that will be generated for testing the upload process.",
 			DefaultValue: "50",
 			Mandatory:    true,
 		},
 		components.StringFlag{
 			Name:         "iterations",
-			Description:  "Number of download iterations",
+			Description:  "This flag specify how many files will be created for testing the upload process.",
 			DefaultValue: "30",
 			Mandatory:    true,
 		},
 		components.StringFlag{
 			Name:         "repo_name",
-			Description:  "Repository name to check the upload against",
+			Description:  "The value provided for this flag will determine which repository the tests will be executed on.",
 			DefaultValue: "benchmark-up-tests",
 			Mandatory:    true,
 		},
