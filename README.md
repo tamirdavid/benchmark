@@ -29,7 +29,6 @@ Uninstalling a plugin
   $ jf benchmark up --size 50 --iterations 5
   $ jf benchmark up --size 50 --iterations 5 --repo_name mytestrepo
   ```
-### Commands
 * dl
     - Flags:
         - size: Determine the size of the files (in MB) that will be generated for testing the download process. **[Default: 50]** **[Mandatory: False]**
