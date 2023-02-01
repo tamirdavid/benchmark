@@ -1,8 +1,8 @@
 package commands
 
 import (
+	"benchmark/lib/benchmarkUtils"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
@@ -21,12 +21,12 @@ func UploadCommand() components.Command {
 	}
 }
 
-func setUploadConig(c *components.Context) *BenchmarkConfig {
-	var uploadConfig = new(BenchmarkConfig)
+func setUploadConig(c *components.Context) *benchmarkUtils.BenchmarkConfig {
+	var uploadConfig = new(benchmarkUtils.BenchmarkConfig)
 	uploadConfig.FilesSizesInMb = c.GetStringFlagValue("size")
 	uploadConfig.Iterations = c.GetStringFlagValue("iterations")
-	uploadConfig.repositoryName = c.GetStringFlagValue("repo_name")
-	uploadConfig.operation = "upload"
+	uploadConfig.RepositoryName = c.GetStringFlagValue("repo_name")
+	uploadConfig.Operation = "upload"
 	return uploadConfig
 }
 
@@ -53,19 +53,19 @@ func UploadCommandFlags() []components.Flag {
 	}
 }
 
-func upCmd(c *components.Context, st *BenchmarkConfig) error {
-	log.Info("Starting upload measurement command")
-	IterationsInt, err := strconv.Atoi(st.Iterations)
-	FilesSizesInMbInt, err2 := strconv.Atoi(st.FilesSizesInMb)
-	if err != nil || err2 != nil {
-		fmt.Println("Error converting Iterations and Files sizes from string to int:", err)
-	}
-	CreateLocalRepository(c, st.repositoryName)
-	filesNames := GenerateFiles(IterationsInt, FilesSizesInMbInt)
-	uploadResults := MeasureOperationTimes(c, st, filesNames)
+func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) error {
+	log.Info("Starting 'up' command to measure upload time to Artifactory...")
+
+	servicesManager := benchmarkUtils.CreateServiceManagerWithThreads(c)
+	IterationsInt := benchmarkUtils.CheckIntLikeString(uploadConfig.Iterations)
+	FilesSizesInMbInt := benchmarkUtils.CheckIntLikeString(uploadConfig.FilesSizesInMb)
+
+	benchmarkUtils.CreateLocalRepository(uploadConfig.RepositoryName, servicesManager)
+	filesNames := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
+	uploadResults := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager)
 	filePath := fmt.Sprintf("benchmark-upload-%s.output", time.Now().Format("2006-01-02T15:04:05"))
-	WriteResult(filePath, uploadResults)
-	log.Info("Finished upload mesurement command")
+	benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
+	log.Info("Finished 'up' command")
 
 	return nil
 }

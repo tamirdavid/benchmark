@@ -1,4 +1,4 @@
-module github.com/jfrog/jfrog-cli-plugin-template
+module benchmark
 
 go 1.14
 

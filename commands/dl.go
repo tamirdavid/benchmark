@@ -1,8 +1,8 @@
 package commands
 
 import (
+	"benchmark/lib/benchmarkUtils"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
@@ -21,12 +21,12 @@ func DownloadCommand() components.Command {
 	}
 }
 
-func setDownloadConfig(c *components.Context) *BenchmarkConfig {
-	var downloadConfig = new(BenchmarkConfig)
+func setDownloadConfig(c *components.Context) *benchmarkUtils.BenchmarkConfig {
+	var downloadConfig = new(benchmarkUtils.BenchmarkConfig)
 	downloadConfig.FilesSizesInMb = c.GetStringFlagValue("size")
 	downloadConfig.Iterations = c.GetStringFlagValue("iterations")
-	downloadConfig.repositoryName = c.GetStringFlagValue("repo_name")
-	downloadConfig.operation = "download"
+	downloadConfig.RepositoryName = c.GetStringFlagValue("repo_name")
+	downloadConfig.Operation = "download"
 	return downloadConfig
 }
 
@@ -34,43 +34,44 @@ func DownloadCommandFlags() []components.Flag {
 	return []components.Flag{
 		components.StringFlag{
 			Name:         "size",
-			Description:  "Size of file in MB to preform download tests for",
+			Description:  "The value provided for this flag will determine the size of the files that will be generated for testing the download process.",
 			DefaultValue: "1",
 			Mandatory:    true,
 		},
 		components.StringFlag{
 			Name:         "iterations",
-			Description:  "Number of download iterations",
+			Description:  "This flag specify how many files will be created for testing the download process.",
 			DefaultValue: "5",
 			Mandatory:    true,
 		},
 		components.StringFlag{
 			Name:         "repo_name",
-			Description:  "Repository name to check the downloads against",
+			Description:  "The value provided for this flag will determine which repository the tests will be executed on.",
 			DefaultValue: "benchmark-dl-tests",
 		},
 	}
 }
 
-func dlCmd(c *components.Context, st *BenchmarkConfig) error {
-	log.Info("Starting download measurement command")
-	IterationsInt, err := strconv.Atoi(st.Iterations)
-	FilesSizesInMbInt, err2 := strconv.Atoi(st.FilesSizesInMb)
-	if err != nil || err2 != nil {
-		fmt.Println("Error converting Iterations and Files sizes from string to int:", err)
-	}
-	CreateLocalRepository(c, st.repositoryName)
-	filesNames := GenerateFiles(IterationsInt, FilesSizesInMbInt)
-	confDetails, _ := getRtDetails(c)
-	// upload files before downloading it
+func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig) error {
+	log.Info("Starting 'dl' command to measure download time from Artifactory...")
+
+	servicesManager := benchmarkUtils.CreateServiceManagerWithThreads(c)
+
+	IterationsInt := benchmarkUtils.CheckIntLikeString(downloadConfig.Iterations)
+	FilesSizesInMbInt := benchmarkUtils.CheckIntLikeString(downloadConfig.FilesSizesInMb)
+
+	// Create a repository and upload files that will be used to measure the download time.
+	benchmarkUtils.CreateLocalRepository(downloadConfig.RepositoryName, servicesManager)
+	filesNames := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
 	for _, file := range filesNames {
-		UploadFiles(confDetails, file, st.repositoryName)
+		benchmarkUtils.UploadFiles(file, downloadConfig.RepositoryName, servicesManager)
 	}
 
-	uploadResults := MeasureOperationTimes(c, st, filesNames)
+	uploadResults := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager)
 	filePath := fmt.Sprintf("benchmark-download-%s.output", time.Now().Format("2006-01-02T15:04:05"))
-	WriteResult(filePath, uploadResults)
-	log.Info("Finishing download measurement command")
+	benchmarkUtils.WriteResult(filePath, uploadResults, downloadConfig.FilesSizesInMb)
+	log.Info("Finished 'dl' command.")
+	benchmarkUtils.DeleteRepository(downloadConfig.RepositoryName, servicesManager)
 
 	return nil
 }

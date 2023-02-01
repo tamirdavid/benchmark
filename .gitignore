@@ -9,6 +9,7 @@ out
 
 # Template executable
 jfrog-cli-plugin-template
+benchmark
 
 # Vim
 *~

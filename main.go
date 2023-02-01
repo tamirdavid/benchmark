@@ -1,9 +1,10 @@
 package main
 
 import (
+	"benchmark/commands"
+
 	"github.com/jfrog/jfrog-cli-core/v2/plugins"
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
-	"github.com/jfrog/jfrog-cli-plugin-template/commands"
 )
 
 func main() {
