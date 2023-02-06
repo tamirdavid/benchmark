@@ -43,7 +43,9 @@ func CreateLocalRepository(repoName string, servicesManager artifactory.Artifact
 	if err != nil {
 		if strings.Contains(err.Error(), "Case insensitive repository key already exists") {
 			ReCreateLocalRepository(repoName, servicesManager)
+			return
 		}
+		log.Error(err)
 	}
 }
 
@@ -62,15 +64,46 @@ func DeleteLocalRepository(repoName string, servicesManager artifactory.Artifact
 	}
 }
 
-func CreateServiceManagerWithThreads(c *components.Context) artifactory.ArtifactoryServicesManager {
-	confDetails, _ := getRtDetails(c)
-	servicesManager, err := rtUtils.CreateServiceManagerWithThreads(confDetails, false, 1, 1, 1)
+func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) artifactory.ArtifactoryServicesManager {
+	servicesManager, err := rtUtils.CreateServiceManagerWithThreads(serverDetails, false, 1, 1, 1)
 	if err != nil {
 		log.Error("Failed to create ServiceManager ", err)
 		os.Exit(1)
 	}
+	version, err := servicesManager.GetVersion()
+	if err != nil || version == "" {
+		log.Error("")
+	}
+
 	return servicesManager
 }
+
+func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkConfig) artifactory.ArtifactoryServicesManager {
+	customServer := IsCustomCredsProvided(cliConfig)
+	if customServer {
+		serverDetails := config.ServerDetails{ArtifactoryUrl: cliConfig.Url, Password: cliConfig.Password, User: cliConfig.UserName}
+		serverDetails.ArtifactoryUrl = clientutils.AddTrailingSlashIfNeeded(serverDetails.ArtifactoryUrl)
+		serverDetails.ArtifactoryUrl = AddTrailingArtifactoryIfNeeded(serverDetails.ArtifactoryUrl)
+		config.CreateInitialRefreshableTokensIfNeeded(&serverDetails)
+		serviceManger := getSvcManagerAfterValidation(&serverDetails)
+		return serviceManger
+	} else {
+		confDetails, err := getRtDetails(c)
+		if err != nil {
+			log.Error("Failed to get server details using default server-id")
+		}
+		serviceManger := getSvcManagerAfterValidation(confDetails)
+		return serviceManger
+	}
+}
+
+func AddTrailingArtifactoryIfNeeded(url string) string {
+	if url != "" && !strings.HasSuffix(url, "artifactory/") {
+		url += "artifactory/"
+	}
+	return url
+}
+
 func UploadFiles(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (timeTaken time.Duration) {
 	up := services.NewUploadParams()
 	up.CommonParams = &utils.CommonParams{Pattern: filepath.Join(fileName), Recursive: false, Target: repositoryName}

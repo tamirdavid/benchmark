@@ -3,10 +3,14 @@ package benchmarkUtils
 import (
 	"bufio"
 	"crypto/rand"
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
@@ -18,9 +22,12 @@ type BenchmarkConfig struct {
 	Iterations     string
 	RepositoryName string
 	Operation      string
+	Url            string
+	UserName       string
+	Password       string
 }
 
-func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) []string {
+func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
 	log.Info("Starting to generate files locally")
 	sliceOfFileNames := []string{}
 	directoryName := CreateDirectory("/tmp/", "testfiles/")
@@ -29,21 +36,19 @@ func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) []string {
 		log.Info("Genarating file [" + fileName + "] In size of [" + fmt.Sprint(sizeOfFilesInMB) + "MB]")
 		file, err := os.Create(fileName)
 		if err != nil {
-			log.Error("Failed to create files -", err)
-			os.Exit(1)
+			return nil, errors.New("Failed to create files -" + err.Error())
 		}
 		defer file.Close()
 		data := make([]byte, sizeOfFilesInMB*1024*1024)
 		rand.Read(data)
 		_, err = file.Write(data)
 		if err != nil {
-			log.Error("Failed to insert content into files")
-			os.Exit(1)
+			return nil, errors.New("Failed to insert content into files")
 		}
 		sliceOfFileNames = append(sliceOfFileNames, fileName)
 	}
 	log.Info("Sucessfully finished with generating files")
-	return sliceOfFileNames
+	return sliceOfFileNames, nil
 }
 
 func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager) map[string]time.Duration {
@@ -86,11 +91,83 @@ func CreateDirectory(path string, dirName string) string {
 	return newPath
 }
 
-func CheckIntLikeString(str string) int {
+func CheckIntLikeString(str string) error {
 	value, err := strconv.Atoi(str)
 	if err != nil {
-		log.Error("Error: " + str + " is not an integer-like string.")
+		return errors.New("Error: " + str + " is not an integer-like string.")
+	}
+	if value <= 0 {
+		return errors.New("Iterations and size must be positive")
+	}
+	return nil
+}
+
+func ValidateHostByLookup(url string) error {
+	testedString := url
+	re := regexp.MustCompile(`(/artifactory/)|(/artifactory)`)
+	testedString = re.ReplaceAllString(testedString, "")
+	if strings.HasSuffix(testedString, "/") {
+		testedString = testedString[:len(testedString)-1]
+	}
+	_, err := net.LookupHost(testedString)
+	if err != nil {
+		return errors.New("URL [" + url + "] is not valid")
+	}
+	return nil
+}
+
+func IsCustomCredsProvided(cliConfig *BenchmarkConfig) bool {
+	if cliConfig.Password != "" && cliConfig.UserName != "" && cliConfig.Url != "" {
+		return true
+	}
+	if cliConfig.Password != "" || cliConfig.UserName != "" || cliConfig.Url != "" {
+		log.Error("To use custom server with credentials, you must insert url + username + password ..")
 		os.Exit(1)
 	}
-	return value
+	return false
+}
+
+func UrlStartsWithHttpMethod(url string) bool {
+	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
+}
+
+func ValidateInput(cliConfig *BenchmarkConfig) error {
+	if IsCustomCredsProvided(cliConfig) {
+		err := validateUrlInput(cliConfig)
+		if err != nil {
+			return err
+		}
+	}
+	StringsIntLikeErr := validateIntStringsLikeInput(cliConfig)
+	if StringsIntLikeErr != nil {
+		return StringsIntLikeErr
+	}
+	return nil
+}
+
+func validateIntStringsLikeInput(cliConfig *BenchmarkConfig) error {
+	filesSizeErr := CheckIntLikeString(cliConfig.FilesSizesInMb)
+	if filesSizeErr != nil {
+		return filesSizeErr
+	}
+	iterationsErr := CheckIntLikeString(cliConfig.Iterations)
+	if iterationsErr != nil {
+		return iterationsErr
+	}
+	return nil
+}
+
+func validateUrlInput(cliConfig *BenchmarkConfig) error {
+	if IsCustomCredsProvided(cliConfig) {
+		url := cliConfig.Url
+		if !UrlStartsWithHttpMethod(url) {
+			return errors.New("The url [" + url + "] not starting with http/https")
+		}
+		err := ValidateHostByLookup(cliConfig.Url)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package commands
 import (
 	"benchmark/lib/benchmarkUtils"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
@@ -15,19 +16,29 @@ func UploadCommand() components.Command {
 		Description: "Upload artifacts tests",
 		Flags:       UploadCommandFlags(),
 		Action: func(c *components.Context) error {
-			uploadConfig := setUploadConig(c)
+			uploadConfig, err := setUploadConig(c)
+			if err != nil {
+				return err
+			}
 			return upCmd(c, uploadConfig)
 		},
 	}
 }
 
-func setUploadConig(c *components.Context) *benchmarkUtils.BenchmarkConfig {
+func setUploadConig(c *components.Context) (*benchmarkUtils.BenchmarkConfig, error) {
 	var uploadConfig = new(benchmarkUtils.BenchmarkConfig)
 	uploadConfig.FilesSizesInMb = c.GetStringFlagValue("size")
 	uploadConfig.Iterations = c.GetStringFlagValue("iterations")
 	uploadConfig.RepositoryName = c.GetStringFlagValue("repo_name")
 	uploadConfig.Operation = "upload"
-	return uploadConfig
+	uploadConfig.Url = c.GetStringFlagValue("url")
+	uploadConfig.UserName = c.GetStringFlagValue("username")
+	uploadConfig.Password = c.GetStringFlagValue("password")
+	err := benchmarkUtils.ValidateInput(uploadConfig)
+	if err != nil {
+		return nil, err
+	}
+	return uploadConfig, nil
 }
 
 func UploadCommandFlags() []components.Flag {
@@ -50,18 +61,37 @@ func UploadCommandFlags() []components.Flag {
 			DefaultValue: "benchmark-up-tests",
 			Mandatory:    true,
 		},
+		components.StringFlag{
+			Name:         "url",
+			DefaultValue: "",
+			Description:  "[ONLY ONCE USING CUSTOM SERVER] url of Artifactory server",
+		},
+		components.StringFlag{
+			Name:         "username",
+			DefaultValue: "",
+			Description:  "[ONLY ONCE USING CUSTOM SERVER] username for Artifactory server",
+		},
+		components.StringFlag{
+			Name:         "password",
+			DefaultValue: "",
+			Description:  "[ONLY ONCE USING CUSTOM SERVER] password for Artifacory server",
+		},
 	}
 }
 
 func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) error {
 	log.Info("Starting 'up' command to measure upload time to Artifactory...")
 
-	servicesManager := benchmarkUtils.CreateServiceManagerWithThreads(c)
-	IterationsInt := benchmarkUtils.CheckIntLikeString(uploadConfig.Iterations)
-	FilesSizesInMbInt := benchmarkUtils.CheckIntLikeString(uploadConfig.FilesSizesInMb)
+	servicesManager := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, uploadConfig)
+
+	IterationsInt, _ := strconv.Atoi(uploadConfig.Iterations)
+	FilesSizesInMbInt, _ := strconv.Atoi(uploadConfig.FilesSizesInMb)
 
 	benchmarkUtils.CreateLocalRepository(uploadConfig.RepositoryName, servicesManager)
-	filesNames := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
+	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
+	if err != nil {
+		return err
+	}
 	uploadResults := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager)
 	filePath := fmt.Sprintf("benchmark-upload-%s.output", time.Now().Format("2006-01-02T15:04:05"))
 	benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
