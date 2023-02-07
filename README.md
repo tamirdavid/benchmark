@@ -1,7 +1,13 @@
 # benchmark
+A [JFrog CLI plugin](https://www.jfrog.com/confluence/display/CLI/JFrog+CLI#JFrogCLI-JFrogCLIPlugins) to benchmark Artifactory upload or download speeds
 
 ## About this plugin
-This plugin is designed to measure upload and download operations to and from your Artifactory instance. It can be used to perform load tests on your instance to ensure that it can handle the desired level of traffic. The plugin provides metrics on upload and download speeds, as well as the number of successful and failed operations. This information can be used to identify and troubleshoot performance issues, and to optimize the configuration of your instance for optimal performance.
+This plugin is for measuring upload and download speeds to and from an Artifactory instance.
+
+It should be used to benchmarks your instance uploads and downloads speeds.<br>
+The plugin provides metrics on upload or download speeds, as well as the number of successful and failed operations. The results are written to a `csv` formatted file.
+
+This plugin can be used to compare your Artifactory instance behaviour before and after a change like a version upgrade or a configuration change.
 
 ## Installation with JFrog CLI
 Installing the latest version:
@@ -21,8 +27,8 @@ Uninstalling a plugin
 * up
     - Flags:
         - size: Determine the size of the files (in MB) that will be generated for testing the upload process. **[Default: 50]** **[Mandatory: False]**
-        - iterations:How many files will be created for testing the upload process. **[Default: 30]** **[Mandatory: False]**
-        - repo_name: repository the tests will be executed on. **[Default: benchmark-up-tests]** **[Mandatory: False]**
+        - iterations: How many files will be created for testing the upload process. **[Default: 30]** **[Mandatory: False]**
+        - repo_name: Repository the tests will be executed on. **[Default: benchmark-up-tests]** **[Mandatory: False]**
     - Example:
     ```
   $ jf benchmark up
