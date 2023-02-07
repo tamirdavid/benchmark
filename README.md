@@ -22,6 +22,16 @@ Uninstalling a plugin
 
 `$ jf plugin uninstall benchmark`
 
+## Building from source
+To build the **benchmark** binary
+```shell
+go build
+```
+To build the **benchmark** binary for multiple operating systems and architectures (Mac, Linux and Windows)
+```shell
+./build-binary.sh
+```
+
 ## Usage
 ### Commands
 * up
