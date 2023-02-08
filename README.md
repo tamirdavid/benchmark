@@ -25,7 +25,7 @@ Uninstalling a plugin
 ## Building from source
 To build the **benchmark** binary
 ```shell
-go build
+go build -o benchmark
 ```
 To build the **benchmark** binary for multiple operating systems and architectures (Mac, Linux and Windows)
 ```shell
