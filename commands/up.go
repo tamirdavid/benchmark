@@ -81,12 +81,11 @@ func UploadCommandFlags() []components.Flag {
 
 func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) error {
 	log.Info("Starting 'up' command to measure upload time to Artifactory...")
-
+	var benchmarkResults []benchmarkUtils.BenchmarkResult
 	servicesManager, serviceManagerError := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, uploadConfig)
 	if serviceManagerError != nil {
 		return serviceManagerError
 	}
-
 	IterationsInt, _ := strconv.Atoi(uploadConfig.Iterations)
 	FilesSizesInMbInt, _ := strconv.Atoi(uploadConfig.FilesSizesInMb)
 
@@ -98,12 +97,12 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 	if err != nil {
 		return err
 	}
-	uploadResults, measureError := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager)
+	measureError := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager, &benchmarkResults)
 	if measureError != nil {
 		return measureError
 	}
 	filePath := fmt.Sprintf("benchmark-upload-%s.csv", time.Now().Format("2006-01-02T15:04:05"))
-	writeResultsError := benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
+	writeResultsError := benchmarkUtils.WriteResults(filePath, benchmarkResults)
 	if writeResultsError != nil {
 		return writeResultsError
 	}

@@ -45,8 +45,9 @@ func CreateLocalRepository(repoName string, servicesManager artifactory.Artifact
 			if recreateError != nil {
 				return recreateError
 			}
+		} else {
+			return err
 		}
-		return err
 	}
 	return nil
 }

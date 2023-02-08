@@ -1,7 +1,6 @@
 package benchmarkUtils
 
 import (
-	"bufio"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -52,41 +51,37 @@ func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
 	return sliceOfFileNames, nil
 }
 
-func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager) (map[string]time.Duration, error) {
-	results := make(map[string]time.Duration)
+func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager,
+	benchmarkResults *[]BenchmarkResult) error {
 	for _, file := range fileNames {
 		if st.Operation == "upload" {
-			duration, uploadError := UploadFiles(file, st.RepositoryName, servicesManager)
+			uploadError := MeasureSingleOperation(file, st.RepositoryName, servicesManager, st.FilesSizesInMb, *&benchmarkResults, UploadFiles)
 			if uploadError != nil {
-				return nil, uploadError
+				return uploadError
 			}
-			results[file] = duration
 		}
 		if st.Operation == "download" {
-			duration, downloadError := DownloadFiles(file, st.RepositoryName, servicesManager)
+			downloadError := MeasureSingleOperation(file, st.RepositoryName, servicesManager, st.FilesSizesInMb, *&benchmarkResults, DownloadFiles)
 			if downloadError != nil {
-				return nil, downloadError
+				return downloadError
 			}
-			results[file] = duration
 		}
 	}
-	return results, nil
+	return nil
 }
 
-func WriteResult(filePath string, results map[string]time.Duration, size string) error {
-	file, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+type runFunc func(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (time.Duration, error)
 
-	writer := bufio.NewWriter(file)
-	defer writer.Flush()
-
-	fmt.Fprintln(writer, "file,size,time_taken")
-	for file, timeTaken := range results {
-		fmt.Fprintf(writer, "%s,%s,%s\n", filepath.Base(file), size+"MB", timeTaken)
+func MeasureSingleOperation(file string, repoName string, serviceManager artifactory.ArtifactoryServicesManager,
+	size string, benchmarkResults *[]BenchmarkResult, operation runFunc) error {
+	duration, downloadError := operation(file, repoName, serviceManager)
+	if downloadError != nil {
+		return downloadError
 	}
+	sizeMbIntFormat, _ := strconv.Atoi(size)
+	uploadedMB := int64(sizeMbIntFormat)
+	speed := float64(uploadedMB) / duration.Seconds()
+	*benchmarkResults = append(*benchmarkResults, *NewBenchmarkResult(file, size+"MB", fmt.Sprintf("%s", duration), fmt.Sprintf("%.2f MB/s", speed)))
 	return nil
 }
 

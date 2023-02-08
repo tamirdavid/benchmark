@@ -80,7 +80,7 @@ func DownloadCommandFlags() []components.Flag {
 
 func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig) error {
 	log.Info("Starting 'dl' command to measure download time from Artifactory...")
-
+	var benchmarkResults []benchmarkUtils.BenchmarkResult
 	servicesManager, serviceManagerError := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, downloadConfig)
 	if serviceManagerError != nil {
 		return serviceManagerError
@@ -104,12 +104,12 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 			return err
 		}
 	}
-	uploadResults, measureError := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager)
+	measureError := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager, &benchmarkResults)
 	if measureError != nil {
 		return measureError
 	}
 	filePath := fmt.Sprintf("benchmark-download-%s.csv", time.Now().Format("2006-01-02T15:04:05"))
-	writeResultsError := benchmarkUtils.WriteResult(filePath, uploadResults, downloadConfig.FilesSizesInMb)
+	writeResultsError := benchmarkUtils.WriteResults(filePath, benchmarkResults)
 	if writeResultsError != nil {
 		return writeResultsError
 	}
