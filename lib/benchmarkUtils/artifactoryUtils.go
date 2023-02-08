@@ -149,7 +149,7 @@ func DownloadFiles(fileName string, repositoryName string, servicesManager artif
 }
 
 func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServicesManager) error {
-	log.Info("Cleanup created resources [repositories/binaries]")
+	log.Info("Deleting the repository " + repo)
 	err := servicesManager.DeleteRepository(repo)
 	if err != nil {
 		log.Error("Failed to delete repository ["+repo+"]", err)

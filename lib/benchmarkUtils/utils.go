@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -175,7 +176,6 @@ func validateUrlInput(cliConfig *BenchmarkConfig) error {
 		if !UrlStartsWithHttpMethod(url) {
 			return errors.New("The url [" + url + "] not starting with http/https")
 		}
-		// err := ValidateHostByLookup(cliConfig.Url)
 		err := ValidateUrlUsingReadiness(cliConfig.Url)
 		if err != nil {
 			return err
@@ -193,5 +193,47 @@ func validateRepoNameInput(s string) error {
 	if len(s) > 63 {
 		return errors.New("Repository name must be maximum length of 64 characters")
 	}
+	return nil
+}
+
+func CleanupCliResources(config *BenchmarkConfig, servicesManager artifactory.ArtifactoryServicesManager) error {
+	log.Info("Starting to cleanup CLI created resources")
+	deleteRepoError := DeleteRepository(config.RepositoryName, servicesManager)
+	if deleteRepoError != nil {
+		return deleteRepoError
+	}
+	deleteFilesError := deleteLocalFiles(config.Iterations)
+	if deleteFilesError != nil {
+		return deleteFilesError
+	}
+	log.Info("Finished cleanup CLI resources")
+	return nil
+}
+
+func deleteLocalFiles(Iterations string) error {
+	log.Info("Deleting files generated for test")
+	IterationsInt, _ := strconv.Atoi(Iterations)
+	for i := 1; i < IterationsInt+1; i++ {
+		fileName := fmt.Sprintf("/tmp/testfiles/File%v.txt", i)
+		removingErr := os.Remove(fileName)
+		if removingErr != nil {
+			return removingErr
+		}
+	}
+	deletingDirError := os.Remove("/tmp/testfiles")
+	if deletingDirError != nil {
+		return deletingDirError
+	}
+	return nil
+}
+
+func ReadFileAndPrint(filename string) error {
+	pwd, _ := os.Getwd()
+	log.Info("Read [" + pwd + filename + "]")
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
 	return nil
 }

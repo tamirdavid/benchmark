@@ -90,7 +90,10 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 	IterationsInt, _ := strconv.Atoi(uploadConfig.Iterations)
 	FilesSizesInMbInt, _ := strconv.Atoi(uploadConfig.FilesSizesInMb)
 
-	benchmarkUtils.CreateLocalRepository(uploadConfig.RepositoryName, servicesManager)
+	localRepoError := benchmarkUtils.CreateLocalRepository(uploadConfig.RepositoryName, servicesManager)
+	if localRepoError != nil {
+		return localRepoError
+	}
 	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
 	if err != nil {
 		return err
@@ -105,10 +108,13 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 		return writeResultsError
 	}
 	log.Info("Finished 'up' command")
-	deleteError := benchmarkUtils.DeleteRepository(uploadConfig.RepositoryName, servicesManager)
-	if deleteError != nil {
-		return deleteError
+	cleanupErr := benchmarkUtils.CleanupCliResources(uploadConfig, servicesManager)
+	if cleanupErr != nil {
+		return cleanupErr
 	}
-
+	summriseError := benchmarkUtils.ReadFileAndPrint(filePath)
+	if summriseError != nil {
+		return summriseError
+	}
 	return nil
 }

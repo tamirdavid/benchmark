@@ -90,7 +90,10 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 	FilesSizesInMbInt, _ := strconv.Atoi(downloadConfig.FilesSizesInMb)
 
 	// Creating a repository and upload files that will be used to measure the download time.
-	benchmarkUtils.CreateLocalRepository(downloadConfig.RepositoryName, servicesManager)
+	localRepoError := benchmarkUtils.CreateLocalRepository(downloadConfig.RepositoryName, servicesManager)
+	if localRepoError != nil {
+		return localRepoError
+	}
 	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
 	if err != nil {
 		return err
@@ -101,7 +104,6 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 			return err
 		}
 	}
-
 	uploadResults, measureError := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager)
 	if measureError != nil {
 		return measureError
@@ -112,10 +114,13 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 		return writeResultsError
 	}
 	log.Info("Finished 'dl' command.")
-	deleteError := benchmarkUtils.DeleteRepository(downloadConfig.RepositoryName, servicesManager)
-	if deleteError != nil {
-		return deleteError
+	cleanupErr := benchmarkUtils.CleanupCliResources(downloadConfig, servicesManager)
+	if cleanupErr != nil {
+		return cleanupErr
 	}
-
+	summriseError := benchmarkUtils.ReadFileAndPrint(filePath)
+	if summriseError != nil {
+		return summriseError
+	}
 	return nil
 }
