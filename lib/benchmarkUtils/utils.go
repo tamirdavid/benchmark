@@ -55,13 +55,13 @@ func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesMana
 	benchmarkResults *[]BenchmarkResult) error {
 	for _, file := range fileNames {
 		if st.Operation == "upload" {
-			uploadError := MeasureSingleOperation(file, st.RepositoryName, servicesManager, st.FilesSizesInMb, *&benchmarkResults, UploadFiles)
+			uploadError := MeasureSingleOperation(file, st, servicesManager, *&benchmarkResults, UploadFiles)
 			if uploadError != nil {
 				return uploadError
 			}
 		}
 		if st.Operation == "download" {
-			downloadError := MeasureSingleOperation(file, st.RepositoryName, servicesManager, st.FilesSizesInMb, *&benchmarkResults, DownloadFiles)
+			downloadError := MeasureSingleOperation(file, st, servicesManager, *&benchmarkResults, DownloadFiles)
 			if downloadError != nil {
 				return downloadError
 			}
@@ -72,16 +72,16 @@ func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesMana
 
 type runFunc func(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (time.Duration, error)
 
-func MeasureSingleOperation(file string, repoName string, serviceManager artifactory.ArtifactoryServicesManager,
-	size string, benchmarkResults *[]BenchmarkResult, operation runFunc) error {
-	duration, downloadError := operation(file, repoName, serviceManager)
+func MeasureSingleOperation(file string, st *BenchmarkConfig, serviceManager artifactory.ArtifactoryServicesManager,
+	benchmarkResults *[]BenchmarkResult, operation runFunc) error {
+	duration, downloadError := operation(file, st.RepositoryName, serviceManager)
 	if downloadError != nil {
 		return downloadError
 	}
-	sizeMbIntFormat, _ := strconv.Atoi(size)
+	sizeMbIntFormat, _ := strconv.Atoi(st.FilesSizesInMb)
 	uploadedMB := int64(sizeMbIntFormat)
 	speed := float64(uploadedMB) / duration.Seconds()
-	*benchmarkResults = append(*benchmarkResults, *NewBenchmarkResult(file, size+"MB", fmt.Sprintf("%s", duration), fmt.Sprintf("%.2f MB/s", speed)))
+	*benchmarkResults = append(*benchmarkResults, *NewBenchmarkResult(file, st.FilesSizesInMb+"MB", fmt.Sprintf("%s", duration), fmt.Sprintf("%.2f MB/s", speed)))
 	return nil
 }
 
