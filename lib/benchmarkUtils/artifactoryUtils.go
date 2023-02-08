@@ -2,7 +2,7 @@ package benchmarkUtils
 
 import (
 	"errors"
-	"os"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -72,18 +72,19 @@ func DeleteLocalRepository(repoName string, servicesManager artifactory.Artifact
 	return nil
 }
 
-func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) artifactory.ArtifactoryServicesManager {
+func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) (artifactory.ArtifactoryServicesManager, error) {
 	servicesManager, err := rtUtils.CreateServiceManagerWithThreads(serverDetails, false, 1, 1, 1)
 	if err != nil {
 		log.Error("Failed to create ServiceManager ", err)
-		os.Exit(1)
+		return nil, err
 	}
 	version, err := servicesManager.GetVersion()
 	if err != nil || version == "" {
-		log.Error("")
+		log.Error("Failed to use serviceManager to get server version")
+		return nil, err
 	}
 
-	return servicesManager
+	return servicesManager, nil
 }
 
 func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkConfig) (artifactory.ArtifactoryServicesManager, error) {
@@ -96,7 +97,10 @@ func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkCo
 		if tokenError != nil {
 			return nil, tokenError
 		}
-		serviceManger := getSvcManagerAfterValidation(&serverDetails)
+		serviceManger, serviceMngrErr := getSvcManagerAfterValidation(&serverDetails)
+		if serviceMngrErr != nil {
+			return nil, serviceMngrErr
+		}
 		return serviceManger, nil
 	} else {
 		confDetails, err := getRtDetails(c)
@@ -104,7 +108,10 @@ func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkCo
 			log.Error("Failed to get server details using default server-id")
 			return nil, err
 		}
-		serviceManger := getSvcManagerAfterValidation(confDetails)
+		serviceManger, serviceMngrErr := getSvcManagerAfterValidation(confDetails)
+		if serviceMngrErr != nil {
+			return nil, serviceMngrErr
+		}
 		return serviceManger, nil
 	}
 }
@@ -149,4 +156,31 @@ func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServic
 		return err
 	}
 	return nil
+}
+
+func ValidateUrlUsingReadiness(url string) error {
+	readinessEndpoint := getReadinessEndpointPerUrl(url)
+	log.Info("Validate url is valid artifactory server by sending")
+	resp, err := http.Get(url + readinessEndpoint)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("Readiness" + url + readinessEndpoint + " failed")
+	}
+	return nil
+}
+
+func getReadinessEndpointPerUrl(url string) string {
+	if strings.HasSuffix(url, "/artifactory") {
+		return "/api/v1/system/readiness"
+	} else if strings.HasSuffix(url, "/artifactory/") {
+		return "api/v1/system/readiness"
+	} else if strings.HasSuffix(url, "/") {
+		return "artifactory/api/v1/system/readiness"
+	} else {
+		return "/artifactory/api/v1/system/readiness"
+	}
 }

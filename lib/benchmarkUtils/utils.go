@@ -175,7 +175,8 @@ func validateUrlInput(cliConfig *BenchmarkConfig) error {
 		if !UrlStartsWithHttpMethod(url) {
 			return errors.New("The url [" + url + "] not starting with http/https")
 		}
-		err := ValidateHostByLookup(cliConfig.Url)
+		// err := ValidateHostByLookup(cliConfig.Url)
+		err := ValidateUrlUsingReadiness(cliConfig.Url)
 		if err != nil {
 			return err
 		}
