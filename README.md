@@ -57,6 +57,17 @@ To build the **benchmark** binary for multiple operating systems and architectur
   $ jf benchmark dl --size 50 --iterations 5 --repo_name mytestrepo
   ```
 
+### Output file Example
+* Bouth 'dl' and 'up' commands output is csv files containg the filename, size, time it took to upload/download.
+- for Example:
+```
+file,size,time_taken
+File1.txt,50MB,14.76517576s
+File2.txt,50MB,14.835556461s
+File3.txt,50MB,14.561855731s
+File4.txt,50MB,15.041486972s
+```
+
 
 ## Release Notes
 The release notes are available [here](RELEASE.md).
