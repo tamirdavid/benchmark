@@ -99,7 +99,7 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 	if measureError != nil {
 		return measureError
 	}
-	filePath := fmt.Sprintf("benchmark-upload-%s.output", time.Now().Format("2006-01-02T15:04:05"))
+	filePath := fmt.Sprintf("benchmark-upload-%s.csv", time.Now().Format("2006-01-02T15:04:05"))
 	writeResultsError := benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
 	if writeResultsError != nil {
 		return writeResultsError

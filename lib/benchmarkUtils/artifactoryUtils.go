@@ -160,7 +160,7 @@ func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServic
 
 func ValidateUrlUsingReadiness(url string) error {
 	readinessEndpoint := getReadinessEndpointPerUrl(url)
-	log.Info("Validate url is valid artifactory server by sending")
+	log.Info("Validate url is an Artifactory server by sending readiness request")
 	resp, err := http.Get(url + readinessEndpoint)
 	if err != nil {
 		return err
