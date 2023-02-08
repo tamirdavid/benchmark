@@ -35,33 +35,41 @@ func getRtDetails(c *components.Context) (*config.ServerDetails, error) {
 	return details, nil
 }
 
-// Create local repository
-func CreateLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) {
+func CreateLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) error {
 	params := services.NewGenericLocalRepositoryParams()
 	params.Key = repoName
 	err := servicesManager.CreateLocalRepository().Generic(params)
 	if err != nil {
 		if strings.Contains(err.Error(), "Case insensitive repository key already exists") {
-			ReCreateLocalRepository(repoName, servicesManager)
-			return
+			recreateError := ReCreateLocalRepository(repoName, servicesManager)
+			if recreateError != nil {
+				return recreateError
+			}
 		}
-		log.Error(err)
+		return err
 	}
+	return nil
 }
 
-func ReCreateLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) {
+func ReCreateLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) error {
 	log.Info("Recreating [" + repoName + "] Because it is already exists")
-	DeleteLocalRepository(repoName, servicesManager)
-	CreateLocalRepository(repoName, servicesManager)
-
-}
-func DeleteLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) {
-	err := servicesManager.DeleteRepository(repoName)
-	if err != nil {
-		log.Error("Not able to delete repository %v", repoName)
-		log.Error(err)
-		os.Exit(1)
+	deleteError := DeleteLocalRepository(repoName, servicesManager)
+	if deleteError != nil {
+		return deleteError
 	}
+	createRepoErr := CreateLocalRepository(repoName, servicesManager)
+	if createRepoErr != nil {
+		return createRepoErr
+	}
+	return nil
+}
+func DeleteLocalRepository(repoName string, servicesManager artifactory.ArtifactoryServicesManager) error {
+	deleteRepositoryErr := servicesManager.DeleteRepository(repoName)
+	if deleteRepositoryErr != nil {
+		log.Error("Not able to delete repository %v", repoName)
+		return deleteRepositoryErr
+	}
+	return nil
 }
 
 func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) artifactory.ArtifactoryServicesManager {
@@ -78,22 +86,26 @@ func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) artifacto
 	return servicesManager
 }
 
-func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkConfig) artifactory.ArtifactoryServicesManager {
+func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkConfig) (artifactory.ArtifactoryServicesManager, error) {
 	customServer := IsCustomCredsProvided(cliConfig)
 	if customServer {
 		serverDetails := config.ServerDetails{ArtifactoryUrl: cliConfig.Url, Password: cliConfig.Password, User: cliConfig.UserName}
 		serverDetails.ArtifactoryUrl = clientutils.AddTrailingSlashIfNeeded(serverDetails.ArtifactoryUrl)
 		serverDetails.ArtifactoryUrl = AddTrailingArtifactoryIfNeeded(serverDetails.ArtifactoryUrl)
-		config.CreateInitialRefreshableTokensIfNeeded(&serverDetails)
+		tokenError := config.CreateInitialRefreshableTokensIfNeeded(&serverDetails)
+		if tokenError != nil {
+			return nil, tokenError
+		}
 		serviceManger := getSvcManagerAfterValidation(&serverDetails)
-		return serviceManger
+		return serviceManger, nil
 	} else {
 		confDetails, err := getRtDetails(c)
 		if err != nil {
 			log.Error("Failed to get server details using default server-id")
+			return nil, err
 		}
 		serviceManger := getSvcManagerAfterValidation(confDetails)
-		return serviceManger
+		return serviceManger, nil
 	}
 }
 
@@ -104,7 +116,7 @@ func AddTrailingArtifactoryIfNeeded(url string) string {
 	return url
 }
 
-func UploadFiles(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (timeTaken time.Duration) {
+func UploadFiles(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (time.Duration, error) {
 	up := services.NewUploadParams()
 	up.CommonParams = &utils.CommonParams{Pattern: filepath.Join(fileName), Recursive: false, Target: repositoryName}
 	up.Flat = true
@@ -112,30 +124,29 @@ func UploadFiles(fileName string, repositoryName string, servicesManager artifac
 	totalSucceeded, totalFailed, err := servicesManager.UploadFiles(up)
 	end := time.Since(start)
 	if totalFailed > 0 && totalSucceeded == 0 || err != nil {
-		log.Error("Failed to upload the files to artifactory")
-		os.Exit(1)
+		return 0, err
 	}
-	return end
+	return end, nil
 }
 
-func DownloadFiles(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (timeTaken time.Duration) {
+func DownloadFiles(fileName string, repositoryName string, servicesManager artifactory.ArtifactoryServicesManager) (time.Duration, error) {
 	dl := services.NewDownloadParams()
 	dl.CommonParams = &utils.CommonParams{Pattern: filepath.Join(filepath.Base(fileName)), Recursive: false, Target: repositoryName}
 	start := time.Now()
 	totalSucceeded, totalFailed, err := servicesManager.DownloadFiles(dl)
 	end := time.Since(start)
 	if totalFailed > 0 && totalSucceeded == 0 || err != nil {
-		log.Error("Failed to download files from Artifactory")
-		os.Exit(1)
+		return 0, errors.New("Failed to download files from Artifactory")
 	}
-	return end
+	return end, nil
 }
 
-func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServicesManager) {
+func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServicesManager) error {
 	log.Info("Cleanup created resources [repositories/binaries]")
 	err := servicesManager.DeleteRepository(repo)
 	if err != nil {
 		log.Error("Failed to delete repository ["+repo+"]", err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }

@@ -81,7 +81,10 @@ func DownloadCommandFlags() []components.Flag {
 func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig) error {
 	log.Info("Starting 'dl' command to measure download time from Artifactory...")
 
-	servicesManager := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, downloadConfig)
+	servicesManager, serviceManagerError := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, downloadConfig)
+	if serviceManagerError != nil {
+		return serviceManagerError
+	}
 
 	IterationsInt, _ := strconv.Atoi(downloadConfig.Iterations)
 	FilesSizesInMbInt, _ := strconv.Atoi(downloadConfig.FilesSizesInMb)
@@ -93,14 +96,26 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 		return err
 	}
 	for _, file := range filesNames {
-		benchmarkUtils.UploadFiles(file, downloadConfig.RepositoryName, servicesManager)
+		_, err := benchmarkUtils.UploadFiles(file, downloadConfig.RepositoryName, servicesManager)
+		if err != nil {
+			return err
+		}
 	}
 
-	uploadResults := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager)
-	filePath := fmt.Sprintf("benchmark-download-%s.output", time.Now().Format("2006-01-02T15:04:05"))
-	benchmarkUtils.WriteResult(filePath, uploadResults, downloadConfig.FilesSizesInMb)
+	uploadResults, measureError := benchmarkUtils.MeasureOperationTimes(downloadConfig, filesNames, servicesManager)
+	if measureError != nil {
+		return measureError
+	}
+	filePath := fmt.Sprintf("benchmark-download-%s.csv", time.Now().Format("2006-01-02T15:04:05"))
+	writeResultsError := benchmarkUtils.WriteResult(filePath, uploadResults, downloadConfig.FilesSizesInMb)
+	if writeResultsError != nil {
+		return writeResultsError
+	}
 	log.Info("Finished 'dl' command.")
-	benchmarkUtils.DeleteRepository(downloadConfig.RepositoryName, servicesManager)
+	deleteError := benchmarkUtils.DeleteRepository(downloadConfig.RepositoryName, servicesManager)
+	if deleteError != nil {
+		return deleteError
+	}
 
 	return nil
 }

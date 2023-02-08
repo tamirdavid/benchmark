@@ -51,24 +51,31 @@ func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
 	return sliceOfFileNames, nil
 }
 
-func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager) map[string]time.Duration {
+func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager) (map[string]time.Duration, error) {
 	results := make(map[string]time.Duration)
 	for _, file := range fileNames {
 		if st.Operation == "upload" {
-			results[file] = UploadFiles(file, st.RepositoryName, servicesManager)
+			duration, uploadError := UploadFiles(file, st.RepositoryName, servicesManager)
+			if uploadError != nil {
+				return nil, uploadError
+			}
+			results[file] = duration
 		}
 		if st.Operation == "download" {
-			results[file] = DownloadFiles(file, st.RepositoryName, servicesManager)
+			duration, downloadError := DownloadFiles(file, st.RepositoryName, servicesManager)
+			if downloadError != nil {
+				return nil, downloadError
+			}
+			results[file] = duration
 		}
 	}
-	return results
+	return results, nil
 }
 
-func WriteResult(filePath string, results map[string]time.Duration, size string) {
+func WriteResult(filePath string, results map[string]time.Duration, size string) error {
 	file, err := os.Create(filePath)
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		return err
 	}
 	defer file.Close()
 
@@ -79,6 +86,7 @@ func WriteResult(filePath string, results map[string]time.Duration, size string)
 	for file, timeTaken := range results {
 		fmt.Fprintf(writer, "%s,%s,%s\n", filepath.Base(file), size+"MB", timeTaken)
 	}
+	return nil
 }
 
 func CreateDirectory(path string, dirName string) string {
@@ -142,6 +150,10 @@ func ValidateInput(cliConfig *BenchmarkConfig) error {
 	if StringsIntLikeErr != nil {
 		return StringsIntLikeErr
 	}
+	RepoNameNotValidError := validateRepoNameInput(cliConfig.RepositoryName)
+	if RepoNameNotValidError != nil {
+		return RepoNameNotValidError
+	}
 	return nil
 }
 
@@ -168,6 +180,17 @@ func validateUrlInput(cliConfig *BenchmarkConfig) error {
 			return err
 		}
 		return nil
+	}
+	return nil
+}
+
+func validateRepoNameInput(s string) error {
+	match, _ := regexp.MatchString("^[a-zA-Z0-9-._]+$", s)
+	if !match {
+		return errors.New("Repository name can containletters, numbers, dashes, dots, and underscores only")
+	}
+	if len(s) > 63 {
+		return errors.New("Repository name must be maximum length of 64 characters")
 	}
 	return nil
 }

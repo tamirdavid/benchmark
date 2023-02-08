@@ -82,7 +82,10 @@ func UploadCommandFlags() []components.Flag {
 func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) error {
 	log.Info("Starting 'up' command to measure upload time to Artifactory...")
 
-	servicesManager := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, uploadConfig)
+	servicesManager, serviceManagerError := benchmarkUtils.GetSvcManagerBasedOnAuthLogic(c, uploadConfig)
+	if serviceManagerError != nil {
+		return serviceManagerError
+	}
 
 	IterationsInt, _ := strconv.Atoi(uploadConfig.Iterations)
 	FilesSizesInMbInt, _ := strconv.Atoi(uploadConfig.FilesSizesInMb)
@@ -92,10 +95,20 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 	if err != nil {
 		return err
 	}
-	uploadResults := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager)
+	uploadResults, measureError := benchmarkUtils.MeasureOperationTimes(uploadConfig, filesNames, servicesManager)
+	if measureError != nil {
+		return measureError
+	}
 	filePath := fmt.Sprintf("benchmark-upload-%s.output", time.Now().Format("2006-01-02T15:04:05"))
-	benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
+	writeResultsError := benchmarkUtils.WriteResult(filePath, uploadResults, uploadConfig.FilesSizesInMb)
+	if writeResultsError != nil {
+		return writeResultsError
+	}
 	log.Info("Finished 'up' command")
+	deleteError := benchmarkUtils.DeleteRepository(uploadConfig.RepositoryName, servicesManager)
+	if deleteError != nil {
+		return deleteError
+	}
 
 	return nil
 }
