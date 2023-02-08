@@ -58,8 +58,7 @@ To build the **benchmark** binary for multiple operating systems and architectur
   ```
 
 ### Output file Example
-* Bouth 'dl' and 'up' commands output is csv files containg the filename, size, time it took to upload/download.
-- for Example:
+* Bouth 'dl' and 'up' commands output is csv files containg the filename, size, time it took to upload/download:
 ```
 file,size,time_taken
 File1.txt,50MB,14.76517576s
