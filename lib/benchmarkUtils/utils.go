@@ -81,7 +81,7 @@ func MeasureSingleOperation(file string, st *BenchmarkConfig, serviceManager art
 	sizeMbIntFormat, _ := strconv.Atoi(st.FilesSizesInMb)
 	uploadedMB := int64(sizeMbIntFormat)
 	speed := float64(uploadedMB) / duration.Seconds()
-	*benchmarkResults = append(*benchmarkResults, *NewBenchmarkResult(file, st.FilesSizesInMb+"MB", fmt.Sprintf("%s", duration), fmt.Sprintf("%.2f MB/s", speed)))
+	*benchmarkResults = append(*benchmarkResults, *NewBenchmarkResult(file, st.FilesSizesInMb, fmt.Sprintf("%s", duration), fmt.Sprintf("%.2f", speed)))
 	return nil
 }
 

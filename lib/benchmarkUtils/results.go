@@ -22,7 +22,7 @@ type BenchmarkResult struct {
 }
 
 func NewBenchMarkResults(results []BenchmarkResult) *BenchMarkResults {
-	return &BenchMarkResults{Results: results, ColumnNames: "file,size,time_taken,Speed"}
+	return &BenchMarkResults{Results: results, ColumnNames: "file,size (MB),time taken (sec),speed (MB/sec)"}
 }
 
 func NewBenchmarkResult(file string, size string, duration string, speed string) *BenchmarkResult {
