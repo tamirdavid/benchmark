@@ -224,7 +224,7 @@ func deleteLocalFiles(Iterations string) error {
 
 func ReadFileAndPrint(filename string) error {
 	pwd, _ := os.Getwd()
-	log.Info("Read [" + pwd + filename + "]")
+	log.Info("Read [" + pwd + "/" + filename + "]")
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err

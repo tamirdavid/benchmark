@@ -60,17 +60,17 @@ To build the **benchmark** binary for multiple operating systems and architectur
 ### Output file Example
 * Both the 'dl' and 'up' commands produce CSV files that contain the filename, size, and the elapsed time for uploading/downloading:
 ```
-file,size,time_taken,Speed
-/tmp/testfiles/File1.txt,50MB,14.664069103s,3.41 MB/s
-/tmp/testfiles/File2.txt,50MB,15.302840585s,3.27 MB/s
-/tmp/testfiles/File3.txt,50MB,17.859408288s,2.80 MB/s
-/tmp/testfiles/File4.txt,50MB,14.003771159s,3.57 MB/s
-/tmp/testfiles/File5.txt,50MB,14.498499084s,3.45 MB/s
-/tmp/testfiles/File6.txt,50MB,14.844652081s,3.37 MB/s
-/tmp/testfiles/File7.txt,50MB,14.286648744s,3.50 MB/s
-/tmp/testfiles/File8.txt,50MB,14.35213191s,3.48 MB/s
-/tmp/testfiles/File9.txt,50MB,14.667853445s,3.41 MB/s
-/tmp/testfiles/File10.txt,50MB,14.682988659s,3.41 MB/s
+file,size (MB),time taken (sec),speed (MB/sec)
+/tmp/testfiles/File1.txt,50,14.664069103s,3.41
+/tmp/testfiles/File2.txt,50,15.302840585s,3.27
+/tmp/testfiles/File3.txt,50,17.859408288s,2.80
+/tmp/testfiles/File4.txt,50,14.003771159s,3.57
+/tmp/testfiles/File5.txt,50,14.498499084s,3.45
+/tmp/testfiles/File6.txt,50,14.844652081s,3.37
+/tmp/testfiles/File7.txt,50,14.286648744s,3.50
+/tmp/testfiles/File8.txt,50,14.35213191s,3.48
+/tmp/testfiles/File9.txt,50,14.667853445s,3.41
+/tmp/testfiles/File10.txt,50,14.682988659s,3.41
 ```
 
 
