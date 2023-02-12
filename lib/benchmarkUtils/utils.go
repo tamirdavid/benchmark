@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -106,29 +105,14 @@ func CheckIntLikeString(str string) error {
 	return nil
 }
 
-func ValidateHostByLookup(url string) error {
-	testedString := url
-	re := regexp.MustCompile(`(/artifactory/)|(/artifactory)`)
-	testedString = re.ReplaceAllString(testedString, "")
-	if strings.HasSuffix(testedString, "/") {
-		testedString = testedString[:len(testedString)-1]
-	}
-	_, err := net.LookupHost(testedString)
-	if err != nil {
-		return errors.New("URL [" + url + "] is not valid")
-	}
-	return nil
-}
-
-func IsCustomCredsProvided(cliConfig *BenchmarkConfig) bool {
+func IsCustomCredsProvided(cliConfig *BenchmarkConfig) (bool, error) {
 	if cliConfig.Password != "" && cliConfig.UserName != "" && cliConfig.Url != "" {
-		return true
+		return true, nil
 	}
 	if cliConfig.Password != "" || cliConfig.UserName != "" || cliConfig.Url != "" {
-		log.Error("To use custom server with credentials, you must insert url + username + password ..")
-		os.Exit(1)
+		return false, errors.New("To use custom server with credentials, you must insert url + username + password ..")
 	}
-	return false
+	return false, nil
 }
 
 func UrlStartsWithHttpMethod(url string) bool {
@@ -136,7 +120,11 @@ func UrlStartsWithHttpMethod(url string) bool {
 }
 
 func ValidateInput(cliConfig *BenchmarkConfig) error {
-	if IsCustomCredsProvided(cliConfig) {
+	isCustomCredsProvided, customCredsErr := IsCustomCredsProvided(cliConfig)
+	if customCredsErr != nil {
+		return customCredsErr
+	}
+	if isCustomCredsProvided {
 		err := validateUrlInput(cliConfig)
 		if err != nil {
 			return err
@@ -146,7 +134,7 @@ func ValidateInput(cliConfig *BenchmarkConfig) error {
 	if StringsIntLikeErr != nil {
 		return StringsIntLikeErr
 	}
-	RepoNameNotValidError := validateRepoNameInput(cliConfig.RepositoryName)
+	RepoNameNotValidError := ValidateRepoNameInput(cliConfig.RepositoryName)
 	if RepoNameNotValidError != nil {
 		return RepoNameNotValidError
 	}
@@ -166,7 +154,11 @@ func validateIntStringsLikeInput(cliConfig *BenchmarkConfig) error {
 }
 
 func validateUrlInput(cliConfig *BenchmarkConfig) error {
-	if IsCustomCredsProvided(cliConfig) {
+	CustomCredsProvided, customCredsErr := IsCustomCredsProvided(cliConfig)
+	if customCredsErr != nil {
+		return customCredsErr
+	}
+	if CustomCredsProvided {
 		url := cliConfig.Url
 		if !UrlStartsWithHttpMethod(url) {
 			return errors.New("The url [" + url + "] not starting with http/https")
@@ -180,7 +172,7 @@ func validateUrlInput(cliConfig *BenchmarkConfig) error {
 	return nil
 }
 
-func validateRepoNameInput(s string) error {
+func ValidateRepoNameInput(s string) error {
 	match, _ := regexp.MatchString("^[a-zA-Z0-9-._]+$", s)
 	if !match {
 		return errors.New("Repository name can containletters, numbers, dashes, dots, and underscores only")
@@ -197,7 +189,7 @@ func CleanupCliResources(config *BenchmarkConfig, servicesManager artifactory.Ar
 	if deleteRepoError != nil {
 		return deleteRepoError
 	}
-	deleteFilesError := deleteLocalFiles(config.Iterations)
+	deleteFilesError := DeleteLocalFilesAndTestDirectory(config.Iterations)
 	if deleteFilesError != nil {
 		return deleteFilesError
 	}
@@ -205,7 +197,7 @@ func CleanupCliResources(config *BenchmarkConfig, servicesManager artifactory.Ar
 	return nil
 }
 
-func deleteLocalFiles(Iterations string) error {
+func DeleteLocalFilesAndTestDirectory(Iterations string) error {
 	log.Info("Deleting files generated for test")
 	IterationsInt, _ := strconv.Atoi(Iterations)
 	for i := 1; i < IterationsInt+1; i++ {

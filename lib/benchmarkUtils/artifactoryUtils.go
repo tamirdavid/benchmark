@@ -89,7 +89,7 @@ func getSvcManagerAfterValidation(serverDetails *config.ServerDetails) (artifact
 }
 
 func GetSvcManagerBasedOnAuthLogic(c *components.Context, cliConfig *BenchmarkConfig) (artifactory.ArtifactoryServicesManager, error) {
-	customServer := IsCustomCredsProvided(cliConfig)
+	customServer, _ := IsCustomCredsProvided(cliConfig)
 	if customServer {
 		serverDetails := config.ServerDetails{ArtifactoryUrl: cliConfig.Url, Password: cliConfig.Password, User: cliConfig.UserName}
 		serverDetails.ArtifactoryUrl = clientutils.AddTrailingSlashIfNeeded(serverDetails.ArtifactoryUrl)
@@ -160,8 +160,8 @@ func DeleteRepository(repo string, servicesManager artifactory.ArtifactoryServic
 }
 
 func ValidateUrlUsingReadiness(url string) error {
-	readinessEndpoint := getReadinessEndpointPerUrl(url)
-	log.Info("Validate url is an Artifactory server by sending readiness request")
+	readinessEndpoint := GetReadinessEndpointPerUrl(url)
+	log.Info("Validate url is an Artifactory server by sending readiness request [" + url + readinessEndpoint + "]")
 	resp, err := http.Get(url + readinessEndpoint)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func ValidateUrlUsingReadiness(url string) error {
 	return nil
 }
 
-func getReadinessEndpointPerUrl(url string) string {
+func GetReadinessEndpointPerUrl(url string) string {
 	if strings.HasSuffix(url, "/artifactory") {
 		return "/api/v1/system/readiness"
 	} else if strings.HasSuffix(url, "/artifactory/") {
