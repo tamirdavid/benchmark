@@ -9,6 +9,21 @@ The plugin provides metrics on upload or download speeds, as well as the number 
 
 This plugin can be used to compare your Artifactory instance behaviour before and after a change like a version upgrade or a configuration change.
 
+
+
+## CLI Configuration
+
+### Configuring Artifactory
+1. Add a new server using,
+
+    ```
+    jf c add
+    ```
+2. Add the Artifactory URL and authentication details.
+
+### Configure credentials without using jf c
+1. Documentation will soon explain how to utilize the url, password, and username flags to send credentials to the benchmark plugin.
+
 ## Installation with JFrog CLI
 Installing the latest version:
 
