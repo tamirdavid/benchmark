@@ -207,7 +207,7 @@ func DeleteLocalFilesAndTestDirectory(Iterations string) error {
 			return removingErr
 		}
 	}
-	deletingDirError := os.Remove("/tmp/testfiles")
+	deletingDirError := os.RemoveAll("/tmp/testfiles")
 	if deletingDirError != nil {
 		return deletingDirError
 	}
