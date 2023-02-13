@@ -39,7 +39,6 @@ To build the **benchmark** binary for multiple operating systems and architectur
         - size [Optional] -  Determine the size of the files (in MB) that will be generated for testing the upload process. **[Default: 50]**
         - iterations [Optional] - How many files will be created for testing the upload process. **[Default: 30]**
         - repo_name [Optional] - Repository the tests will be executed on. **[Default: benchmark-up-tests]** <br> <br>
-       If you prefer to utilize a custom server instead of one set up and utilized by the JFrog CLI:<br>
         - url [Optional] - If using custom server (not already configured one) **[No default value]**
         - username [Optional] - **[No default value]**
         - password [Optional] - **[No default value]**
@@ -48,13 +47,14 @@ To build the **benchmark** binary for multiple operating systems and architectur
   $ jf benchmark up
   $ jf benchmark up --size 50 --iterations 5
   $ jf benchmark up --size 50 --iterations 5 --repo_name mytestrepo
+  $ jf benchmark up --url <myserverurl> --username <username> --password <password>
+  $ jf benchmark up --url <myserverurl> --username <username> --password <password> --iterations 2 --size 150
   ```
 * dl
     - Flags:
         - size [Optional] - Determine the size of the files (in MB) that will be generated for testing the download process. **[Default: 50]**
         - iterations [Optional] - How many files will be created for testing the download process. **[Default: 30]**
         - repo_name [Optional] - Repository the tests will be executed on. **[Default: benchmark-up-tests]** <br> <br>
-If you prefer to utilize a custom server instead of one set up and utilized by the JFrog CLI: <br>
         - url [Optional] - If using custom server (not already configured one) **[No default value]**
         - username [Optional] - **[No default value]**
         - password [Optional] - **[No default value]**
@@ -63,6 +63,8 @@ If you prefer to utilize a custom server instead of one set up and utilized by t
   $ jf benchmark dl  
   $ jf benchmark dl --size 50 --iterations 5
   $ jf benchmark dl --size 50 --iterations 5 --repo_name mytestrepo
+  $ jf benchmark dl --url <myserverurl> --username <username> --password <password>
+  $ jf benchmark dl --url <myserverurl> --username <username> --password <password> --iterations 15 --size 73
   ```
 
 ### Output file Example
