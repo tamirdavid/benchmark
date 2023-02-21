@@ -57,11 +57,13 @@ To build the **benchmark** binary for multiple operating systems and architectur
         - url [Optional] - If using custom server (not already configured one) **[No default value]**
         - username [Optional] - **[No default value]**
         - password [Optional] - **[No default value]**
+        - append [Optional] - Append the csv results to existing file **[No default value]**
     - Example:
     ```
   $ jf benchmark up
   $ jf benchmark up --size 50 --iterations 5
   $ jf benchmark up --size 50 --iterations 5 --repo_name mytestrepo
+  $ jf benchmark up --size 50 --iterations 5 --repo_name mytestrepo --append benchmark-upload-2023-02-21T11:30:29.csv
   $ jf benchmark up --url <myserverurl> --username <username> --password <password>
   $ jf benchmark up --url <myserverurl> --username <username> --password <password> --iterations 2 --size 150
   ```
@@ -73,11 +75,13 @@ To build the **benchmark** binary for multiple operating systems and architectur
         - url [Optional] - If using custom server (not already configured one) **[No default value]**
         - username [Optional] - **[No default value]**
         - password [Optional] - **[No default value]**
+        - append [Optional] - Append the csv results to existing file **[No default value]**
     - Example:
     ```
   $ jf benchmark dl  
   $ jf benchmark dl --size 50 --iterations 5
   $ jf benchmark dl --size 50 --iterations 5 --repo_name mytestrepo
+  $ jf benchmark up --size 50 --iterations 5 --append benchmark-download-2023-02-21T11:30:29.csv
   $ jf benchmark dl --url <myserverurl> --username <username> --password <password>
   $ jf benchmark dl --url <myserverurl> --username <username> --password <password> --iterations 15 --size 73
   ```
