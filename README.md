@@ -81,7 +81,7 @@ To build the **benchmark** binary for multiple operating systems and architectur
   $ jf benchmark dl  
   $ jf benchmark dl --size 50 --iterations 5
   $ jf benchmark dl --size 50 --iterations 5 --repo_name mytestrepo
-  $ jf benchmark up --size 50 --iterations 5 --append benchmark-download-2023-02-21T11:30:29.csv
+  $ jf benchmark dl --size 50 --iterations 5 --append benchmark-download-2023-02-21T11:30:29.csv
   $ jf benchmark dl --url <myserverurl> --username <username> --password <password>
   $ jf benchmark dl --url <myserverurl> --username <username> --password <password> --iterations 15 --size 73
   ```
