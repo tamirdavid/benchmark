@@ -2,9 +2,7 @@ package commands
 
 import (
 	"benchmark/lib/benchmarkUtils"
-	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/jfrog/jfrog-cli-core/v2/plugins/components"
 	"github.com/jfrog/jfrog-client-go/utils/log"
@@ -34,6 +32,7 @@ func setDownloadConfig(c *components.Context) (*benchmarkUtils.BenchmarkConfig, 
 	downloadConfig.Url = c.GetStringFlagValue("url")
 	downloadConfig.UserName = c.GetStringFlagValue("username")
 	downloadConfig.Password = c.GetStringFlagValue("password")
+	downloadConfig.Append = c.GetStringFlagValue("append")
 	err := benchmarkUtils.ValidateInput(downloadConfig)
 	if err != nil {
 		return nil, err
@@ -75,6 +74,11 @@ func DownloadCommandFlags() []components.Flag {
 			DefaultValue: "",
 			Description:  "[ONLY ONCE USING CUSTOM SERVER] password for Artifacory server",
 		},
+		components.StringFlag{
+			Name:         "append",
+			DefaultValue: "",
+			Description:  "Append the results to existing file",
+		},
 	}
 }
 
@@ -108,8 +112,8 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 	if measureError != nil {
 		return measureError
 	}
-	filePath := fmt.Sprintf("benchmark-download-%s.csv", time.Now().Format("2006-01-02T15:04:05"))
-	writeResultsError := benchmarkUtils.WriteResults(filePath, benchmarkResults)
+	path := benchmarkUtils.GetFilePath(downloadConfig.Operation, downloadConfig.Append)
+	writeResultsError := benchmarkUtils.WriteResults(path, benchmarkResults)
 	if writeResultsError != nil {
 		return writeResultsError
 	}
@@ -118,7 +122,7 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 	if cleanupErr != nil {
 		return cleanupErr
 	}
-	summriseError := benchmarkUtils.ReadFileAndPrint(filePath)
+	summriseError := benchmarkUtils.ReadFileAndPrint(path)
 	if summriseError != nil {
 		return summriseError
 	}

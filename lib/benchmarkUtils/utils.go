@@ -24,6 +24,7 @@ type BenchmarkConfig struct {
 	Url            string
 	UserName       string
 	Password       string
+	Append         string
 }
 
 func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
@@ -137,6 +138,12 @@ func ValidateInput(cliConfig *BenchmarkConfig) error {
 	RepoNameNotValidError := ValidateRepoNameInput(cliConfig.RepositoryName)
 	if RepoNameNotValidError != nil {
 		return RepoNameNotValidError
+	}
+	if cliConfig.Append != "" {
+		_, err := FileExists(cliConfig.Append)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
