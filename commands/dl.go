@@ -77,7 +77,7 @@ func DownloadCommandFlags() []components.Flag {
 		components.StringFlag{
 			Name:         "append",
 			DefaultValue: "",
-			Description:  "Append the results to existing file",
+			Description:  "Append the results to existing results file",
 		},
 	}
 }
