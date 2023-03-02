@@ -25,13 +25,18 @@ type BenchmarkConfig struct {
 	UserName       string
 	Password       string
 	Append         string
+	SameFile       bool
 }
 
-func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
+func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int, sameFile bool) ([]string, error) {
 	log.Info("Starting to generate files locally")
 	sliceOfFileNames := []string{}
 	directoryName := CreateDirectory("/tmp/", "testfiles/")
 	for i := 1; i < numberOfFiles+1; i++ {
+		if sameFile && i != 1 {
+			sliceOfFileNames = append(sliceOfFileNames, fmt.Sprintf("%v/File%v.txt", directoryName, 1))
+			continue
+		}
 		fileName := fmt.Sprintf("%v/File%v.txt", directoryName, i)
 		log.Info("Genarating file [" + fileName + "] In size of [" + fmt.Sprint(sizeOfFilesInMB) + "MB]")
 		file, err := os.Create(fileName)
@@ -53,7 +58,14 @@ func GenerateFiles(numberOfFiles int, sizeOfFilesInMB int) ([]string, error) {
 
 func MeasureOperationTimes(st *BenchmarkConfig, fileNames []string, servicesManager artifactory.ArtifactoryServicesManager,
 	benchmarkResults *[]BenchmarkResult) error {
+	// firstFile := ""
 	for _, file := range fileNames {
+		// if sameFile {
+		// 	if i == 0 {
+		// 		firstFile = file
+		// 	}
+		// 	file = firstFile
+		// }
 		if st.Operation == "upload" {
 			uploadError := MeasureSingleOperation(file, st, servicesManager, *&benchmarkResults, UploadFiles)
 			if uploadError != nil {
@@ -196,7 +208,7 @@ func CleanupCliResources(config *BenchmarkConfig, servicesManager artifactory.Ar
 	if deleteRepoError != nil {
 		return deleteRepoError
 	}
-	deleteFilesError := DeleteLocalFilesAndTestDirectory(config.Iterations)
+	deleteFilesError := DeleteLocalFilesAndTestDirectory(config.Iterations, config.SameFile)
 	if deleteFilesError != nil {
 		return deleteFilesError
 	}
@@ -204,10 +216,13 @@ func CleanupCliResources(config *BenchmarkConfig, servicesManager artifactory.Ar
 	return nil
 }
 
-func DeleteLocalFilesAndTestDirectory(Iterations string) error {
+func DeleteLocalFilesAndTestDirectory(Iterations string, sameFile bool) error {
 	log.Info("Deleting files generated for test")
 	IterationsInt, _ := strconv.Atoi(Iterations)
 	for i := 1; i < IterationsInt+1; i++ {
+		if sameFile && i != 1 {
+			continue
+		}
 		fileName := fmt.Sprintf("/tmp/testfiles/File%v.txt", i)
 		removingErr := os.Remove(fileName)
 		if removingErr != nil {

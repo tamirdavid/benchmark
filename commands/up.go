@@ -33,6 +33,7 @@ func setUploadConig(c *components.Context) (*benchmarkUtils.BenchmarkConfig, err
 	uploadConfig.UserName = c.GetStringFlagValue("username")
 	uploadConfig.Password = c.GetStringFlagValue("password")
 	uploadConfig.Append = c.GetStringFlagValue("append")
+	uploadConfig.SameFile = c.GetBoolFlagValue("same_file")
 	err := benchmarkUtils.ValidateInput(uploadConfig)
 	if err != nil {
 		return nil, err
@@ -53,6 +54,11 @@ func UploadCommandFlags() []components.Flag {
 			Description:  "This flag specify how many files will be created for testing the upload process.",
 			DefaultValue: "30",
 			Mandatory:    true,
+		},
+		components.BoolFlag{
+			Name:         "same_file",
+			Description:  "If true, the same fill will be uploaded to the repo",
+			DefaultValue: false,
 		},
 		components.StringFlag{
 			Name:         "repo_name",
@@ -97,7 +103,7 @@ func upCmd(c *components.Context, uploadConfig *benchmarkUtils.BenchmarkConfig) 
 	if localRepoError != nil {
 		return localRepoError
 	}
-	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
+	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt, uploadConfig.SameFile)
 	if err != nil {
 		return err
 	}

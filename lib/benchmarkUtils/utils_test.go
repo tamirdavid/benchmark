@@ -22,11 +22,12 @@ var generateFilesProvider = []struct {
 func TestGenerateFiles(t *testing.T) {
 	for _, sample := range generateFilesProvider {
 		t.Logf("Starting to generate %v files in size of %v", sample.numberOfFiles, sample.sizeOfFilesInMB)
-		results, err := GenerateFiles(sample.numberOfFiles, sample.sizeOfFilesInMB)
-		if err != nil {
-			t.Error(err)
+		results, err := GenerateFiles(sample.numberOfFiles, sample.sizeOfFilesInMB, false)
+		results2, err2 := GenerateFiles(sample.numberOfFiles, sample.sizeOfFilesInMB, true)
+		if err != nil || err2 != nil {
+			t.Error(err, err2)
 		}
-		if len(results) > 0 {
+		if len(results) > 0 || len(results2) > 0 {
 			t.Logf("Generating %v file of in size of %v succeed", sample.numberOfFiles, sample.sizeOfFilesInMB)
 		}
 	}
@@ -103,7 +104,7 @@ func TestDeleteLocalFiles(t *testing.T) {
 	}
 
 	// Call the function being tested
-	err = DeleteLocalFilesAndTestDirectory("3")
+	err = DeleteLocalFilesAndTestDirectory("3", false)
 	if err != nil {
 		t.Errorf("Expected no error, but got %v", err)
 	}

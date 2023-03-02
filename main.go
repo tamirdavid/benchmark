@@ -15,7 +15,7 @@ func getApp() components.App {
 	app := components.App{}
 	app.Name = "benchmark"
 	app.Description = "Easily test uploads/downloads"
-	app.Version = "v0.1.3"
+	app.Version = "v0.1.4"
 	app.Commands = getCommands()
 	return app
 }

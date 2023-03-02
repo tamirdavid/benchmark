@@ -33,6 +33,7 @@ func setDownloadConfig(c *components.Context) (*benchmarkUtils.BenchmarkConfig, 
 	downloadConfig.UserName = c.GetStringFlagValue("username")
 	downloadConfig.Password = c.GetStringFlagValue("password")
 	downloadConfig.Append = c.GetStringFlagValue("append")
+	downloadConfig.SameFile = c.GetBoolFlagValue("same_file")
 	err := benchmarkUtils.ValidateInput(downloadConfig)
 	if err != nil {
 		return nil, err
@@ -53,6 +54,11 @@ func DownloadCommandFlags() []components.Flag {
 			Description:  "This flag specify how many files will be created for testing the download process.",
 			DefaultValue: "30",
 			Mandatory:    true,
+		},
+		components.BoolFlag{
+			Name:         "same_file",
+			Description:  "If true, the same fill will be uploaded to the repo",
+			DefaultValue: false,
 		},
 		components.StringFlag{
 			Name:         "repo_name",
@@ -98,7 +104,7 @@ func dlCmd(c *components.Context, downloadConfig *benchmarkUtils.BenchmarkConfig
 	if localRepoError != nil {
 		return localRepoError
 	}
-	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt)
+	filesNames, err := benchmarkUtils.GenerateFiles(IterationsInt, FilesSizesInMbInt, downloadConfig.SameFile)
 	if err != nil {
 		return err
 	}
