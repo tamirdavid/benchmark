@@ -169,9 +169,41 @@ func ValidateUrlUsingReadiness(url string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("Readiness" + url + readinessEndpoint + " failed")
+		log.Warn("Validation through the readiness check has failed, potentially due to the use of an old Artifactory version. Attempt to validate using the system/ping.")
+		validationErr := ValidateUrlUsingOldSystemPing(url)
+		if validationErr != nil {
+			return errors.New("Validating URL using readiness and system/ping failed")
+		} else {
+			return nil
+		}
 	}
 	return nil
+}
+
+func ValidateUrlUsingOldSystemPing(url string) error {
+	systemPingEndpoint := GetSystemPingEndpointPerUrl(url)
+	log.Info("Validate url is an Artifactory server by sending system/ping request [" + url + systemPingEndpoint + "]")
+	resp, err := http.Get(url + systemPingEndpoint)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.New("Readiness " + url + systemPingEndpoint + " failed")
+}
+
+func GetSystemPingEndpointPerUrl(url string) string {
+	if strings.HasSuffix(url, "/artifactory") {
+		return "/api/system/ping"
+	} else if strings.HasSuffix(url, "/artifactory/") {
+		return "api/system/ping"
+	} else if strings.HasSuffix(url, "/") {
+		return "artifactory/api/system/ping"
+	} else {
+		return "/artifactory/api/system/ping"
+	}
 }
 
 func GetReadinessEndpointPerUrl(url string) string {
